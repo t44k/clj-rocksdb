@@ -6,8 +6,5 @@
   :dependencies [[org.rocksdb/rocksdbjni "5.14.2"]
                  [byte-streams "0.2.4"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]
-                                  ;[criterium "0.4.4"]
-                                  [com.taoensso/nippy "2.14.0"]
-                                  ;[codox-md "0.2.0" :exclusions [org.clojure/clojure]]
-                                  ]}})
+                                  [com.taoensso/nippy "2.14.0"]]}})
   
