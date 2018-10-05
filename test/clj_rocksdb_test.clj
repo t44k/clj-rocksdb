@@ -45,7 +45,7 @@
          (r/iterator db :a)
          (r/iterator db :a :a)
          (r/iterator db :a :c)))
-  (is (= nil
+  (is (= []
          (r/iterator db :b)
          (r/iterator db :b :d)))
   (r/delete db :a)

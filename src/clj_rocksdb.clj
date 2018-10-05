@@ -24,15 +24,18 @@
   "Creates a seq which can be closed, given a latch which can be closed
    and dereferenced to check whether it's already been closed."
   [s close-fn]
-  (if (empty? s)
-
+  (cond
+    (nil? s)
+    nil
+    
     ;; if we've exhausted the seq, just close it
+    (empty? s)
     (do
       (close-fn)
-      nil)
+      '())
 
+    :else
     (reify
-
       Closeable
       (close [this]
         (close-fn))
@@ -81,6 +84,7 @@
                 #(not (pos? (bs/compare-bytes (first %) end)))
                 s))
             s)]
+    
     (closeable-seq
       (map
         #(vector
