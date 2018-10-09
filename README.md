@@ -6,7 +6,7 @@ The source code and the documentation is hevaily based on [Factual/clj-leveldb](
 ### basic usage
 
 ```clj
-[kotyo/clj-rocksdb "0.1.0"]
+[kotyo/clj-rocksdb "0.1.2"]
 ```
 
 To create or access a database, use `clj-rocksdb/create-db`:
