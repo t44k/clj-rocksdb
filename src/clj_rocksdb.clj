@@ -24,50 +24,43 @@
   "Creates a seq which can be closed, given a latch which can be closed
    and dereferenced to check whether it's already been closed."
   [s close-fn]
-  (cond
-    (nil? s)
-    nil
-    
-    ;; if we've exhausted the seq, just close it
-    (empty? s)
-    (do
-      (close-fn)
-      '())
+  (reify
+    Closeable
+    (close [this]
+      (close-fn))
 
-    :else
-    (reify
-      Closeable
-      (close [this]
-        (close-fn))
-
-      clojure.lang.Sequential
-      clojure.lang.ISeq
-      clojure.lang.Seqable
-      clojure.lang.IPersistentCollection
-      (equiv [this x]
-        (loop [a this, b x]
-          (if (or (empty? a) (empty? b))
-            (and (empty? a) (empty? b))
-            (if (= (first x) (first b))
-              (recur (rest a) (rest b))
-              false))))
-      (empty [_]
-        [])
-      (count [this]
-        (count (seq this)))
-      (cons [_ a]
-        (cons a s))
-      (next [this]
-        (closeable-seq (next s) close-fn))
-      (more [this]
-        (let [rst (next this)]
-          (if (empty? rst)
-            '()
-            rst)))
-      (first [_]
-        (first s))
-      (seq [this]
-        this))))
+    clojure.lang.Sequential
+    clojure.lang.ISeq
+    clojure.lang.Seqable
+    clojure.lang.IPersistentCollection
+    (equiv [this x]
+      (loop [a this, b x]
+        (if (or (empty? a) (empty? b))
+          (and (empty? a) (empty? b))
+          (if (= (first x) (first b))
+            (recur (rest a) (rest b))
+            false))))
+    (empty [_]
+      [])
+    (count [_]
+      (count s))
+    (cons [_ a]
+      (cons a s))
+    (next [_]
+      (if-let [next-s (next s)]
+        (closeable-seq next-s close-fn)
+        (do
+          (close-fn)
+          nil)))
+    (more [this]
+      (let [rst (next this)]
+        (if (empty? rst)
+          '()
+          rst)))
+    (first [_]
+      (first s))
+    (seq [_]
+      (seq s))))
 
 (defn- iterator-seq- [^RocksIterator iterator start end key-decoder key-encoder val-decoder]
   (if start

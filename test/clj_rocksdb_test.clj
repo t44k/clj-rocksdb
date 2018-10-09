@@ -99,3 +99,9 @@
   (is (= nil (r/get db :j)))
   (is (= nil (r/get db :l)))
   (is (thrown? AssertionError (r/batch db {:put [:a]}))))
+
+(deftest iteartor-with-open-empty-list
+  (r/put db :a :b :c :d :e :f) 
+  (with-open [it (r/iterator db :x :y)]
+   (is (= [] it))))
+
