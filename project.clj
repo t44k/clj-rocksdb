@@ -1,4 +1,4 @@
-(defproject kotyo/clj-rocksdb "0.1.2"
+(defproject kotyo/clj-rocksdb "0.1.3-SNAPSHOT"
   :description "Clojure bindings for facebook's rocksdbjni"
   :url "http://github.com/kotyo/clj-rocksdb"
   :license {:name "Eclipse Public License"
