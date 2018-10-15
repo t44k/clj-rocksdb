@@ -11,7 +11,7 @@
     [java.io
      File]))
 
-(defn delete-files-recursively [fname & [silently]]
+(defn- delete-files-recursively [fname & [silently]]
   (letfn [(delete-f [file]
             (when (.isDirectory file)
               (doseq [child-file (.listFiles file)]
