@@ -62,40 +62,46 @@
     (seq [_]
       (seq s))))
 
-(defn- iterator-seq- [^RocksIterator iterator start end key-decoder key-encoder val-decoder]
+(defn- iterator-seq- [^RocksIterator iterator start end reverse? key-decoder key-encoder val-decoder]
   (if start
-    (.seek ^RocksIterator iterator (bs/to-byte-array (key-encoder start)))
-    (.seekToFirst ^RocksIterator iterator))
+    (if reverse?
+      (.seekForPrev ^RocksIterator iterator (bs/to-byte-array (key-encoder start)))
+      (.seek ^RocksIterator iterator (bs/to-byte-array (key-encoder start))))
+    (if reverse?
+      (.seekToLast ^RocksIterator iterator)
+      (.seekToFirst ^RocksIterator iterator)))
 
-  (let [iter (fn iter [it]
-                  (if-not (.isValid it) '()
-                    (lazy-seq (cons [(.key it) (.value it)] (iter (doto it .next))))))
+  (let [iter-step-fn (if reverse? #(doto %1 .prev) #(doto %1 .next))
+        iter (fn iter [it]   
+              (if-not (.isValid it) '()
+                      (lazy-seq (cons [(.key it) (.value it)]   
+                                      (iter (iter-step-fn it))))))
         s (iter iterator)
+        end-test-fn (if reverse? neg? pos?)
         s (if end
             (let [end (bs/to-byte-array (key-encoder end))]
               (take-while
-                #(not (pos? (bs/compare-bytes (first %) end)))
-                s))
+               #(not (end-test-fn (bs/compare-bytes (first %) end)))
+               s))
             s)]
-    
+
     (closeable-seq
-      (map
-        #(vector
-           (key-decoder (first %))
-           (val-decoder (second %)))
-        s)
-      (reify
-        Object
-        (finalize [_] (.close iterator))
-        clojure.lang.IFn
-        (invoke [_] (.close iterator))))))
+     (map #(vector
+            (key-decoder (first %))
+            (val-decoder (second %)))
+      s)
+     (reify
+       Object
+       (finalize [_] (.close iterator))
+       clojure.lang.IFn
+       (invoke [_] (.close iterator))))))
 
 ;;;
 
 (defprotocol IRocksDB
   (^:private ^RocksDB db-  [_])
   (^:private batch- [_] [_ options])
-  (^:private iterator- [_] [_ start end])
+  (^:private iterator- [_] [_ start end reverse?])
   (^:private get- [_ k])
   (^:private put- [_ k v options])
   (^:private del- [_ k options])
@@ -112,11 +118,12 @@
   (db- [_] (db- db))
   (get- [_ k]
     (val-decoder (.get (db- db) read-options (bs/to-byte-array (key-encoder k)))))
-  (iterator- [_ start end]
+  (iterator- [_ start end reverse?]
     (iterator-seq-
       (.newIterator (db- db) read-options)
       start
       end
+      reverse?
       key-decoder
       key-encoder
       val-decoder))
@@ -186,11 +193,12 @@
       key-encoder
       val-encoder
       options))
-  (iterator- [_ start end]
+  (iterator- [_ start end reverse?]
     (iterator-seq-
       (.newIterator db)
       start
       end
+      reverse?
       key-decoder
       key-encoder
       val-decoder)))
@@ -285,7 +293,17 @@
   ([db start]
    (iterator db start nil))
   ([db start end]
-   (iterator- db start end)))
+   (iterator- db start end false)))
+
+(defn reverse-iterator
+  "Returns a closeable sequence of map entries (accessed with `key` and `val`) that is the inclusive
+   range from `start `to `end` in reverse order.  If exhausted, the sequence is automatically closed."
+  ([db]
+   (reverse-iterator db nil nil))
+  ([db start]
+   (reverse-iterator db start nil))
+  ([db start end]
+   (iterator- db start end true)))
 
 (defn put
   "Puts one or more key/value pairs into the given `db`."

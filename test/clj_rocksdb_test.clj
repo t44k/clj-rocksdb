@@ -105,3 +105,15 @@
   (with-open [it (r/iterator db :x :y)]
    (is (= [] it))))
 
+(deftest reverse-iterator
+  (r/put db :a :b :c :d :e :f)
+  (is (= [[:e :f] [:c :d] [:a :b]]
+         (r/reverse-iterator db)))
+  (is (= [[:c :d] [:a :b]]
+         (r/reverse-iterator db :c)))
+  (is (= [[:e :f] [:c :d]]
+          (r/reverse-iterator db nil :c)))
+  (is (= [[:c :d]]
+          (r/reverse-iterator db :d :b)))
+  (is (= []
+          (r/reverse-iterator db :0))))
