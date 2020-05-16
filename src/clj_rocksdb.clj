@@ -1,12 +1,10 @@
 (ns clj-rocksdb
   (:refer-clojure :exclude [get sync])
   (:require
-    [clojure.java.io :as io]
     [byte-streams :as bs])
   (:import
     [java.io
-     Closeable
-     File]))
+     Closeable]))
 
 (import
   '[org.rocksdb
@@ -26,8 +24,7 @@
   [s close-fn]
   (reify
     Closeable
-    (close [this]
-      (close-fn))
+    (close [this] (close-fn))
 
     clojure.lang.Sequential
     clojure.lang.ISeq
@@ -47,11 +44,7 @@
     (cons [_ a]
       (cons a s))
     (next [_]
-      (if-let [next-s (next s)]
-        (closeable-seq next-s close-fn)
-        (do
-          (close-fn)
-          nil)))
+      (next s))
     (more [this]
       (let [rst (next this)]
         (if (empty? rst)
@@ -62,6 +55,12 @@
     (seq [_]
       (seq s))))
 
+(deftype close-type [iterator]
+  Object
+  (finalize [_] (.close iterator))
+  clojure.lang.IFn
+  (invoke [_] (.close iterator)))
+
 (defn- iterator-seq- [^RocksIterator iterator start end reverse? key-decoder key-encoder val-decoder]
   (if start
     (if reverse?
@@ -71,11 +70,11 @@
       (.seekToLast ^RocksIterator iterator)
       (.seekToFirst ^RocksIterator iterator)))
 
-  (let [iter-step-fn (if reverse? #(doto %1 .prev) #(doto %1 .next))
-        iter (fn iter [it]   
-              (if-not (.isValid it) '()
-                      (lazy-seq (cons [(.key it) (.value it)]   
-                                      (iter (iter-step-fn it))))))
+  (let [iter-step-fn (if reverse? #(doto % .prev) #(doto % .next))
+        iter (fn iter [it]
+               (if-not (.isValid it) '()
+                       (lazy-seq (cons [(.key it) (.value it)]
+                                       (iter (iter-step-fn it))))))
         s (iter iterator)
         end-test-fn (if reverse? neg? pos?)
         s (if end
@@ -84,17 +83,12 @@
                #(not (end-test-fn (bs/compare-bytes (first %) end)))
                s))
             s)]
-
     (closeable-seq
      (map #(vector
             (key-decoder (first %))
             (val-decoder (second %)))
-      s)
-     (reify
-       Object
-       (finalize [_] (.close iterator))
-       clojure.lang.IFn
-       (invoke [_] (.close iterator))))))
+          s)
+     (->close-type iterator))))
 
 ;;;
 

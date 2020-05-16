@@ -1,15 +1,10 @@
 (ns clj-rocksdb-test
-  (:require
-    [clojure.test :refer :all]
-    [clj-rocksdb :as r]
-    [byte-streams :as bs]
-    [taoensso.nippy :as nippy]
-    [clojure.edn :as edn])
-  (:import
-   [java.util
-     UUID]
-    [java.io
-     File]))
+  (:require [clojure.test :refer [deftest is use-fixtures]]
+            [clj-rocksdb :as r]
+            [taoensso.nippy :as nippy]
+            [clojure.java.io])
+  (:import [java.util
+            UUID]))
 
 (defn- delete-files-recursively [fname & [silently]]
   (letfn [(delete-f [file]
@@ -117,3 +112,9 @@
           (r/reverse-iterator db :d :b)))
   (is (= []
           (r/reverse-iterator db :0))))
+
+(deftest iterator-stresstest
+  (dotimes [i 10000]
+    (r/put db {:key i} {:val i}))
+  (with-open [it (r/iterator db)]
+    (is (= 10000 (count it)))))
