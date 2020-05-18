@@ -331,7 +331,7 @@
 
 (defn stats
   "Returns statistics for the database."
-  [db property]
+  [db]
   (.getProperty (db- db) "rocksdb.stats"))
 
 (defn bounds
