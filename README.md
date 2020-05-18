@@ -6,7 +6,7 @@ The source code and the documentation is hevaily based on [Factual/clj-leveldb](
 ### basic usage
 
 ```clj
-[kotyo/clj-rocksdb "0.1.5"]
+[kotyo/clj-rocksdb "0.1.6"]
 ```
 
 To create or access a database, use `clj-rocksdb/create-db`:
@@ -16,7 +16,7 @@ RocksDB by default stores the keys and values in byte arrays. We may want to def
 Notice that the value returned is a byte-array.  This is because byte arrays are the native storage format for RocksDB, and we haven't defined custom encoders and decoders.  This can be done in `create-db`:
 
 ```clj
-clj-rocksdb> (def db (create-db "/tmp/leveldb" 
+clj-rocksdb> (def db (create-db "/tmp/rocksdb" 
                        {:key-encoder taoensso.nippy/freeze :key-decoder taoensso.nippy/thaw 
                         :val-encoder taoensso.nippy/freeze :val-decoder taoensso.nippy/thaw}))
 #'clj-rocksdb/db
@@ -60,10 +60,6 @@ Syncing writes to disk can be forced via `sync`, and compaction can be forced vi
 ### license
 
 done by kotyo
+
 EPL-v1.0
-
-### original license
-
-Copyright © 2013 Factual, Inc.
-
 Distributed under the Eclipse Public License, the same as Clojure.
