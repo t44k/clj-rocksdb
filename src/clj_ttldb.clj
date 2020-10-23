@@ -1,4 +1,4 @@
-(ns clj-rocksdb
+(ns clj-ttldb
   (:refer-clojure :exclude [get sync])
   (:require
     [byte-streams :as bs])
@@ -14,7 +14,7 @@
     ReadOptions
     WriteOptions
     CompressionType
-    RocksDB])
+    TtlDB])
 
 ;;;
 
@@ -92,8 +92,8 @@
 
 ;;;
 
-(defprotocol IRocksDB
-  (^:private ^RocksDB db-  [_])
+(defprotocol ITtlDB
+  (^:private ^TtlDB db- [_])
   (^:private batch- [_] [_ options])
   (^:private iterator- [_] [_ start end reverse?])
   (^:private get- [_ k])
@@ -107,7 +107,7 @@
    key-encoder
    val-decoder
    ^ReadOptions read-options]
-  IRocksDB
+  ITtlDB
   (snapshot- [this] this)
   (db- [_] (db- db))
   (get- [_ k]
@@ -127,12 +127,12 @@
   (finalize [this] (.close this)))
 
 (defrecord Batch
-  [^RocksDB db
+  [^TtlDB db
    ^WriteBatch batch
    key-encoder
    val-encoder
    ^WriteOptions options]
-  IRocksDB
+  ITtlDB
   (db- [_] db)
   (batch- [this _] this)
   (put- [_ k v _]
@@ -147,14 +147,14 @@
     (.close batch)))
 
 (defrecord DB
-  [^RocksDB db
+  [^TtlDB db
    key-decoder
    key-encoder
    val-decoder
    val-encoder]
   Closeable
   (close [_] (.close db))
-  IRocksDB
+  ITtlDB
   (db- [_]
     db)
   (get- [_ k]
@@ -219,6 +219,8 @@
            val-decoder
            val-encoder
            create-if-missing?
+           time-to-live     
+           readonly?
            error-if-exists?
            write-buffer-size
            block-size
@@ -238,16 +240,20 @@
          block-size (* 16 1024)
          write-buffer-size (* 32 1024 1024)
          create-if-missing? true
+         time-to-live 604800
+         readonly? false
          error-if-exists? false}
     :as options}]
   (->DB
-    (RocksDB/open 
+    (TtlDB/open 
      (let [opts (Options.)]
         (doseq [[k v] options]
           (when (contains? option-setters k)
             ((option-setters k) opts v)))
-        opts
-      directory))
+        opts)
+      directory
+      time-to-live
+      readonly?)
     key-decoder
     key-encoder
     val-decoder
@@ -256,7 +262,7 @@
 (defn destroy-db
   "Destroys the database at the specified `directory`."
   [directory]
-  (RocksDB/destroyDB
+  (TtlDB/destroyDB
     directory
     (Options.)))
 

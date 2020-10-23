@@ -1,10 +1,8 @@
-(ns clj-rocksdb-test
+(ns clj-ttldb-test
   (:require [clojure.test :refer [deftest is use-fixtures]]
-            [clj-rocksdb :as r]
+            [clj-ttldb :as r]
             [taoensso.nippy :as nippy]
-            [clojure.java.io])
-  (:import [java.util
-            UUID]))
+            [clojure.java.io]))
 
 (defn- delete-files-recursively [fname & [silently]]
   (letfn [(delete-f [file]
@@ -16,17 +14,23 @@
 
 (def ^:dynamic db nil)
 
+(defn db-dir []
+  (let [path (-> (java.io.File. "") .getAbsolutePath)]
+    (str path "/clj-rocks-testdb")))
+
 (defn db-fixture [f]
-  (let [db-dir (str "/tmp/clj-rocks-testdb-" (UUID/randomUUID) "/")]
+  (let [db-dir (db-dir)]
     (with-redefs [db (r/create-db
                       db-dir
                       {:key-encoder nippy/freeze
                        :key-decoder nippy/thaw
                        :val-decoder nippy/thaw
-                       :val-encoder nippy/freeze})]
+                       :val-encoder nippy/freeze
+                       :create-if-missing? true})]
       (f)
       (.close db)
       (delete-files-recursively db-dir))))
+
 
 (use-fixtures :each db-fixture)
 
