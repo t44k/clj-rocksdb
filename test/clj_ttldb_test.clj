@@ -16,17 +16,15 @@
 
 (defn db-dir []
   (let [path (-> (java.io.File. "") .getAbsolutePath)]
-    (str path "/clj-rocks-testdb")))
+    (str path "/clj-ttldb-testdb")))
 
 (defn db-fixture [f]
   (let [db-dir (db-dir)]
     (with-redefs [db (r/create-db
                       db-dir
-                      {:key-encoder nippy/freeze
-                       :key-decoder nippy/thaw
-                       :val-decoder nippy/thaw
-                       :val-encoder nippy/freeze
-                       :create-if-missing? true})]
+                      {:create-if-missing? true}
+                      1000000
+                      false)]
       (f)
       (.close db)
       (delete-files-recursively db-dir))))
@@ -34,7 +32,7 @@
 
 (use-fixtures :each db-fixture)
 
-(deftest test-basic-operations
+(deftest basic-operations-test
   (r/put db :a :b) 
   (is (= :b
          (r/get db :a)
@@ -99,12 +97,12 @@
   (is (= nil (r/get db :l)))
   (is (thrown? AssertionError (r/batch db {:put [:a]}))))
 
-(deftest iteartor-with-open-empty-list
+(deftest iterator-with-open-empty-list-test
   (r/put db :a :b :c :d :e :f) 
   (with-open [it (r/iterator db :x :y)]
    (is (= [] it))))
 
-(deftest reverse-iterator
+(deftest reverse-iterator-test
   (r/put db :a :b :c :d :e :f)
   (is (= [[:e :f] [:c :d] [:a :b]]
          (r/reverse-iterator db)))
@@ -117,7 +115,7 @@
   (is (= []
           (r/reverse-iterator db :0))))
 
-(deftest iterator-stresstest
+(deftest iterator-stress-test
   (dotimes [i 10000]
     (r/put db {:key i} {:val i}))
   (with-open [it (r/iterator db)]

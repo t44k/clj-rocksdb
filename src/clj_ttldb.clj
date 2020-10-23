@@ -1,22 +1,16 @@
 (ns clj-ttldb
   (:refer-clojure :exclude [get sync])
-  (:require
-    [byte-streams :as bs])
-  (:import
-    [java.io
-     Closeable]))
+  (:require [byte-streams :as bs]
+            [taoensso.nippy :as nippy])
+  (:import [java.io Closeable]))
 
-(import
-  '[org.rocksdb
-    WriteBatch
-    RocksIterator
-    Options
-    ReadOptions
-    WriteOptions
-    CompressionType
-    TtlDB])
-
-;;;
+(import '[org.rocksdb WriteBatch
+                      RocksIterator
+                      Options
+                      ReadOptions
+                      WriteOptions
+                      CompressionType
+                      TtlDB])
 
 (defn- closeable-seq
   "Creates a seq which can be closed, given a latch which can be closed
@@ -219,8 +213,6 @@
            val-decoder
            val-encoder
            create-if-missing?
-           time-to-live     
-           readonly?
            error-if-exists?
            write-buffer-size
            block-size
@@ -231,19 +223,14 @@
            paranoid-checks?
            block-restart-interval
            logger]
-    :or {key-decoder identity
-         key-encoder identity
-         val-decoder identity
-         val-encoder identity
-         compress? true
-         cache-size 32
-         block-size (* 16 1024)
-         write-buffer-size (* 32 1024 1024)
-         create-if-missing? true
-         time-to-live 604800
-         readonly? false
-         error-if-exists? false}
-    :as options}]
+    :or {key-decoder nippy/thaw
+         key-encoder nippy/freeze
+         val-decoder nippy/thaw
+         val-encoder nippy/freeze
+         create-if-missing? true}
+    :as options}
+    time-to-live     
+    readonly?]
   (->DB
     (TtlDB/open 
      (let [opts (Options.)]
@@ -262,11 +249,7 @@
 (defn destroy-db
   "Destroys the database at the specified `directory`."
   [directory]
-  (TtlDB/destroyDB
-    directory
-    (Options.)))
-
-;;;
+  (TtlDB/destroyDB directory (Options.)))
 
 (defn get
   "Returns the value of `key` for the given database or snapshot. If the key doesn't exist, returns
