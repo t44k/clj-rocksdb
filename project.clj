@@ -1,4 +1,4 @@
-(defproject vaugusto92/clj-ttldb "0.1.6-SNAPSHOT"
+(defproject vaugusto92/clj-ttldb "0.0.1-SNAPSHOT"
   :description "Clojure bindings for the facebook's rocksdbjni TtlDB."
   :url "http://github.com/vaugusto92/clj-ttldb"
   :license {:name "Eclipse Public License"
