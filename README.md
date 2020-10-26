@@ -66,19 +66,6 @@ If you need to batch a collection of puts and deletes, use `batch`:
 clj-ttldb> (batch db {:put ["a" "b" "c" "d"] :delete ["j" "k" "l"]})
 ```
 
-We can also get a sequence of all key/value pairs, either in the entire database or within a given range using `iterator`:
-
-```clj
-clj-ttldb> (put db "a" "b" "c" "d" "e" "f")
-nil
-clj-ttldb> (iterator db)
-(["a" "b"] ["c" "d"] ["e" "f"])
-clj-ttldb> (iterator db "c" nil)
-(["c" "d"] ["e" "f"])
-clj-ttldb> (iterator db nil "c")
-(["a" "b"] ["c" "d"])
-```
-
 Syncing writes to disk can be forced via `sync`, and compaction can be forced via `compact`.
 
 

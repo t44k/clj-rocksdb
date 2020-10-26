@@ -9,3 +9,5 @@ pom.xml.asc
 /.nrepl-port
 .hgignore
 .hg/
+/test/clj_ttldb_test_iterator.clj
+/src/clj_ttldb_iterator.clj
