@@ -6,7 +6,7 @@ The source code and the documentation is based on [rotyo/clj-rocksdb](https://gi
 ## Basic Usage
 
 ```clj
-[org.clojars.vaugusto92/clj-ttldb "0.0.1-SNAPSHOT"]
+[org.clojars.vaugusto92/clj-ttldb "0.1.0"]
 ```
 
 To create or access a database, use `clj-ttldb/create-db`:
