@@ -1,4 +1,4 @@
-(ns clj-ttldb
+(ns ttldb.core
   (:gen-class)
   (:refer-clojure :exclude [get sync])
   (:import [java.io Closeable]))
@@ -10,50 +10,6 @@
                       WriteOptions
                       CompressionType
                       TtlDB])
-
-
-(defn- closeable-seq
-  "Creates a seq which can be closed, given a latch which can be closed
-   and dereferenced to check whether it's already been closed."
-  [s close-fn]
-  (reify
-    Closeable
-    (close [this] (close-fn))
-
-    clojure.lang.Sequential
-    clojure.lang.ISeq
-    clojure.lang.Seqable
-    clojure.lang.IPersistentCollection
-    (equiv [this x]
-      (loop [a this, b x]
-        (if (or (empty? a) (empty? b))
-          (and (empty? a) (empty? b))
-          (if (= (first x) (first b))
-            (recur (rest a) (rest b))
-            false))))
-    (empty [_]
-      [])
-    (count [_]
-      (count s))
-    (cons [_ a]
-      (cons a s))
-    (next [_]
-      (next s))
-    (more [this]
-      (let [rst (next this)]
-        (if (empty? rst)
-          '()
-          rst)))
-    (first [_]
-      (first s))
-    (seq [_]
-      (seq s))))
-
-(deftype close-type [iterator]
-  Object
-  (finalize [_] (.close iterator))
-  clojure.lang.IFn
-  (invoke [_] (.close iterator)))
 
 (defprotocol ITtlDB
   (^:private ^TtlDB db- [_])

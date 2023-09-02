@@ -1,6 +1,6 @@
-(ns clj-ttldb-test
+(ns ttldb.core-test
   (:require [clojure.test :refer [deftest is use-fixtures testing]]
-            [clj-ttldb :as rdb]
+            [ttldb.core :as rdb]
             [clojure.java.io]))
 
 (defn- delete-files-recursively [fname & [silently]]
