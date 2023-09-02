@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  pull_request: {}
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build a simple Docker image for testing
+        run: docker build --progress=plain --no-cache -t leiningen .
+
+      - name: Test
+        run: docker run --rm -i -v $(pwd):/work leiningen lein test
